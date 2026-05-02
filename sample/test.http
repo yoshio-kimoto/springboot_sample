@@ -1,0 +1,44 @@
+### Create User (POST)
+POST http://localhost:8080/users
+Content-Type: application/json
+
+# {
+#   "name": "Alice",
+#   "email": "alice@example.com"
+# }
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "note": "Sample no memo"
+}
+# {
+#   "name": "",
+#   "email": "alice@example.com"
+# }
+
+### Get All Users (GET)
+GET http://localhost:8080/users
+
+### Get One User (GET)
+GET http://localhost:8080/users/1
+# GET http://localhost:8080/users/3
+# GET http://localhost:8080/users/aaa
+
+### Update User (PUT)
+PUT http://localhost:8080/users/1
+Content-Type: application/json
+
+# {
+#   "name": "Alice Updated",
+#   "email": "alice.updated@example.com"
+# }
+{
+  "name": "ZZZZZZZZZZ",
+  "email": "zzzzzz@example.com"
+}
+
+### Delete User (DELETE)
+DELETE http://localhost:8080/users/1
+
+### Get a note summary (GET)
+GET http://localhost:8080/users/1/note/summary
