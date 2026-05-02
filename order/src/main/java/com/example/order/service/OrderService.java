@@ -1,12 +1,14 @@
 package com.example.order.service;
 
+import com.example.order.dto.OrderId;
 import com.example.order.dto.OrderRequest;
 import com.example.order.dto.OrderResponse;
 import com.example.order.entity.OrderEntity;
 import com.example.order.exception.BusinessException;
 import com.example.order.exception.ResourceNotFoundException;
 import com.example.order.repository.OrderRepository;
-import jakarta.transaction.Transactional;
+//import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,9 +25,9 @@ public class OrderService {
     private final OrderRepository repo;
 
     @Transactional
-    public OrderResponse pay(Long id) {
+    public OrderResponse pay(OrderId id) {
 //        OrderEntity order = repo.findById(id).get(); // Optional.get()
-        OrderEntity order = repo.findByIdForUpdate(id)
+        OrderEntity order = repo.findByIdForUpdate(id.value())
                 .orElseThrow(() -> new ResourceNotFoundException("Order ID not found: " + id));
 
 //        if (order.getStatus().equals("PAID")) {
@@ -49,9 +51,9 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse ship(Long id) {
+    public OrderResponse ship(OrderId id) {
 //        OrderEntity order = repo.findById(id).orElse(null); // null 返却
-        OrderEntity order = repo.findByIdForUpdate(id)
+        OrderEntity order = repo.findByIdForUpdate(id.value())
                 .orElseThrow(() -> new ResourceNotFoundException("Order ID not found: " + id));
 
 //        if (!order.getStatus().equals("PAID")) {
@@ -71,6 +73,16 @@ public class OrderService {
 //        return "ok";
         return toResponse(saved);
 
+    }
+
+    @Transactional
+    public OrderResponse cancel(OrderId id) {
+        OrderEntity order = repo.findByIdForUpdate(id.value())
+                .orElseThrow(() -> new ResourceNotFoundException("Order ID not found: " + id));
+        order.cancel();
+
+        OrderEntity saved = repo.save(order);
+        return toResponse(saved);
     }
 
     @Transactional

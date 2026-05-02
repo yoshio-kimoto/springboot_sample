@@ -9,11 +9,12 @@ Content-Type: application/json
 ### Get All orders (GET)
 GET http://localhost:8080/order
 
-### Pay order (PUT)
+### Pay order (POST)
 POST http://localhost:8080/order/1/pay
-# Content-Type: application/json
 
-### Ship order (PUT)
+### Ship order (POST)
 POST http://localhost:8080/order/1/ship
-# Content-Type: application/json
+
+### Cancel order (POST)
+POST http://localhost:8080/order/1/cancel
 

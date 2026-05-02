@@ -24,17 +24,16 @@ public class OrderEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotNull
+    @Enumerated(EnumType.STRING)
 //    private String status; // CREATED, PAID, SHIPPED, CANCELLED
     private Status status; // CREATED, PAID, SHIPPED, CANCELLED
     @Nullable
     private String memo;
 
-/*
-//    Do we need?
+//    This is for Entity. Pessimistic lock is defined in the Repository.
+//    ただし同じTransactionalの中で両方を同時に使うのはDeadLockの可能性があるので避けるべき
     @Version
     private Long version;
-*/
 
     // getter/setter 省略 <- annotatorで追加した。
 
@@ -49,7 +48,13 @@ public class OrderEntity {
         if (status != Status.PAID) {
             throw new BusinessException("Order ID " + id + " cannot ship: " + status);
         }
-        status = OrderEntity.Status.SHIPPED;
+        status = Status.SHIPPED;
+    }
+
+    public void cancel() {
+        if (status == Status.SHIPPED || status == Status.CANCELLED)
+            throw new BusinessException("Order can't be canceled: status:" + status);
+        status = Status.CANCELLED;
     }
 
 
