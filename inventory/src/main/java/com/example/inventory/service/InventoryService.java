@@ -1,36 +1,58 @@
 package com.example.inventory.service;
 
+import com.example.inventory.dto.InventoryId;
+import com.example.inventory.dto.InventoryResponse;
+import com.example.inventory.dto.Quantity;
 import com.example.inventory.entity.InventoryEntity;
 import com.example.inventory.repository.InventoryRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.inventory.exception.ResourceNotFoundException;
+
 @Service
+@RequiredArgsConstructor
 public class InventoryService {
 
-    @Autowired
-    private InventoryRepository repo;
+    private final InventoryRepository repo;
 
     @Transactional
-    public String decrease(Long id, int qty) {
-        InventoryEntity inv = repo.findById(id).orElse(null);
+    public InventoryResponse decrease(InventoryId id, Quantity qty) {
+        InventoryEntity inv = repo.findByIdForUpdate(id.id())
+                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found: " + id.id()));
 
-        if (inv.getStock() < qty) {
-            return "not enough stock";
-        }
+        inv.decrease(qty);
+        InventoryEntity saved = repo.save(inv);
 
-        inv.setStock(inv.getStock() - qty);
-        repo.save(inv);
-
-        return "ok";
+        return toResponse(saved);
     }
 
     @Transactional
-    public String increase(Long id, int qty) {
-        InventoryEntity inv = repo.findById(id).get();
-        inv.setStock(inv.getStock() + qty);
-        repo.save(inv);
-        return "ok";
+    public InventoryResponse increase(InventoryId id, Quantity qty) {
+        InventoryEntity inv = repo.findByIdForUpdate(id.id())
+                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found: " + id.id()));
+
+        inv.increase(qty);
+        InventoryEntity saved = repo.save(inv);
+
+        return toResponse(saved);
     }
+
+    @Transactional
+    public InventoryResponse reserve(InventoryId id, Quantity qty) {
+        InventoryEntity inv = repo.findByIdForUpdate(id.id())
+                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found: " + id.id()));
+
+        inv.reserve(qty);
+        InventoryEntity saved = repo.save(inv);
+
+        return toResponse(saved);
+    }
+
+    private InventoryResponse toResponse(InventoryEntity entity) {
+        return new InventoryResponse(entity.getId(), entity.getStock(), entity.getReserved());
+    }
+
 }
