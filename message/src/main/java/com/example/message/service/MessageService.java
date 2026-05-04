@@ -1,9 +1,11 @@
 package com.example.message.service;
 
+import com.example.message.dto.MessageId;
 import com.example.message.dto.MessageRequest;
 import com.example.message.dto.MessageResponse;
 import com.example.message.entity.MessageEntity;
 import com.example.message.exception.BusinessException;
+import com.example.message.exception.ResourceNotFoundException;
 import com.example.message.repository.MessageRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,13 +48,29 @@ public class MessageService {
 
     }
 
+    @Transactional
+    public MessageResponse read(MessageId id) {
+        MessageEntity entity = repo.findById(id.id())
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found: ID " + id));
+
+        if (entity.getReadAt() != null)
+            return toResponse(entity);
+
+        entity.markRead();
+        MessageEntity saved = repo.save(entity);
+
+        return toResponse(saved);
+
+    }
+
     private MessageResponse toResponse(MessageEntity entity) {
         return new MessageResponse(
                 entity.getId(),
                 entity.getFromUser(),
                 entity.getToUser(),
                 entity.getText(),
-                entity.getSentAt()
+                entity.getSentAt(),
+                entity.getReadAt()
         );
     }
 }

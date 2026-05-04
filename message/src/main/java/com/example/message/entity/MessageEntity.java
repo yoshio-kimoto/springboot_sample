@@ -30,10 +30,14 @@ public class MessageEntity {
     private String text;
     @NotNull
     private Instant sentAt;
+    private Instant readAt;
 
     @NotNull
     @Column(unique = true, nullable = false)
     private String idempotencyKey;
+
+    @Version
+    private Long version;
 
     public static MessageEntity create(MessageRequest request, String key) {
         return MessageEntity.builder()
@@ -43,6 +47,11 @@ public class MessageEntity {
                 .sentAt(Instant.now(Clock.systemUTC()))
                 .idempotencyKey(key)
                 .build();
+    }
+
+    public void markRead() {
+        if (readAt == null)
+           readAt = Instant.now(Clock.systemUTC());
     }
 
 }

@@ -1,5 +1,6 @@
 package com.example.message.controller;
 
+import com.example.message.dto.MessageId;
 import com.example.message.dto.MessageRequest;
 import com.example.message.dto.MessageResponse;
 import com.example.message.service.MessageService;
@@ -21,6 +22,11 @@ public class MessageController {
             @Valid @RequestBody MessageRequest request
     ) {
         return service.send(key, request);
+    }
+
+    @PostMapping("/{id}/read")
+    public MessageResponse read(@PathVariable String id) {
+        return service.read(MessageId.from(id));
     }
 
 }

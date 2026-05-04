@@ -7,5 +7,6 @@ public record MessageResponse (
         String from,
         String to,
         String text,
-        Instant sentAt
+        Instant sentAt,
+        Instant readAt
 ){}
