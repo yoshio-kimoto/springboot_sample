@@ -31,6 +31,7 @@ public class MessageEntity {
     @NotNull
     private Instant sentAt;
     private Instant readAt;
+    private Instant deleteAt;
 
     @NotNull
     @Column(unique = true, nullable = false)
@@ -39,6 +40,8 @@ public class MessageEntity {
     @Version
     private Long version;
 
+//    idempotencyKeyは同じメッセージを２度送るのを避けるため。
+//    Createを呼ぶ際はMessageにはIDはまだ無いので、リクエストに対する一意のIDは無い。
     public static MessageEntity create(MessageRequest request, String key) {
         return MessageEntity.builder()
                 .fromUser(request.fromUser())
@@ -50,8 +53,15 @@ public class MessageEntity {
     }
 
     public void markRead() {
+        if (deleteAt != null)
+            throw new IllegalStateException("Trying to mark as read for deleted message");
         if (readAt == null)
            readAt = Instant.now(Clock.systemUTC());
+    }
+
+    public void markDelete() {
+        if (deleteAt == null)
+            deleteAt = Instant.now(Clock.systemUTC());
     }
 
 }

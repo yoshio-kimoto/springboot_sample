@@ -3,14 +3,19 @@ package com.example.message.service;
 import com.example.message.dto.MessageId;
 import com.example.message.dto.MessageRequest;
 import com.example.message.dto.MessageResponse;
+import com.example.message.entity.AuditEntity;
 import com.example.message.entity.MessageEntity;
 import com.example.message.exception.BusinessException;
 import com.example.message.exception.ResourceNotFoundException;
+import com.example.message.repository.AuditRepository;
 import com.example.message.repository.MessageRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.bridge.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +27,15 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MessageService {
 
-    private final MessageRepository repo;
+    private final MessageRepository messageRepo;
+    private final AuditRepository auditRepo;
+
+    private static final Logger log = LoggerFactory.getLogger(MessageService.class);
+
 
     @Transactional
     public MessageResponse send(String key, @Valid MessageRequest request) {
-        Optional<MessageEntity> entity = repo.findByIdempotencyKey(key);
+        Optional<MessageEntity> entity = messageRepo.findByIdempotencyKey(key);
         if (entity.isPresent())
             return toResponse(entity.get());
 
@@ -43,23 +52,70 @@ public class MessageService {
                 .build();
 */
         MessageEntity msg = MessageEntity.create(request, key);
-        MessageEntity saved = repo.save(msg);
+        MessageEntity saved = messageRepo.save(msg);
         return toResponse(saved);
 
     }
 
     @Transactional
     public MessageResponse read(MessageId id) {
-        MessageEntity entity = repo.findById(id.id())
+        MessageEntity entity = messageRepo.findById(id.id())
                 .orElseThrow(() -> new ResourceNotFoundException("Message not found: ID " + id));
 
         if (entity.getReadAt() != null)
             return toResponse(entity);
 
         entity.markRead();
-        MessageEntity saved = repo.save(entity);
+        MessageEntity saved = messageRepo.save(entity);
 
         return toResponse(saved);
+
+    }
+
+    @Transactional
+    public MessageResponse delete(MessageId id) {
+        MessageEntity entity = messageRepo.findById(id.id())
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found: ID " + id));
+
+        if (entity.getDeleteAt() != null)
+            return toResponse(entity);
+
+        entity.markDelete();
+        MessageEntity savedMessage = messageRepo.save(entity);
+
+        Optional<AuditEntity> isAuditThere = auditRepo.findByMessageId(id.id());
+        if (isAuditThere.isPresent()) {
+            log.error("Inconsistent audit log");
+        } else {
+            AuditEntity auditEntity = AuditEntity.create(id.id());
+            auditRepo.save(auditEntity);
+        }
+
+        return toResponse(savedMessage);
+
+
+/*
+//        MessageとAuditの両方のConsistencyをチェックしている。
+//        でもこのAPIはMessageに関するものなので、両方でExceptionを投げると混乱する。
+        Optional<AuditEntity> isAuditThere = auditRepo.findByMessageId(id.id());
+        if (isAuditThere.isPresent() && entity.getDeleteAt() != null)
+            return toResponse(entity);
+        if ((isAuditThere.isEmpty() && entity.getDeleteAt() != null) ||
+                (isAuditThere.isPresent() && entity.getDeleteAt() == null)) {
+            throw new IllegalStateException("Inconsistent condition found");
+        }
+
+        entity.markDelete();
+        MessageEntity savedMessage = messageRepo.save(entity);
+
+        AuditEntity auditEntity = AuditEntity.builder()
+                .messageId(id.id())
+                .deleteAt(Instant.now(Clock.systemUTC()))
+                .build();
+        AuditEntity savedAudit = auditRepo.save(auditEntity);
+
+        return toResponse(savedMessage);
+*/
 
     }
 
@@ -70,7 +126,9 @@ public class MessageService {
                 entity.getToUser(),
                 entity.getText(),
                 entity.getSentAt(),
-                entity.getReadAt()
+                entity.getReadAt(),
+                entity.getDeleteAt()
         );
     }
+
 }

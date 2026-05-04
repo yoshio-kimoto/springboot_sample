@@ -8,5 +8,6 @@ public record MessageResponse (
         String to,
         String text,
         Instant sentAt,
-        Instant readAt
+        Instant readAt,
+        Instant deleteAt
 ){}

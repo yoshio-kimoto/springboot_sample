@@ -26,7 +26,13 @@ public class MessageController {
 
     @PostMapping("/{id}/read")
     public MessageResponse read(@PathVariable String id) {
+//        データはDTOで渡すべき。たとえ単純なLongであっても。
         return service.read(MessageId.from(id));
+    }
+
+    @PostMapping("/{id}/delete")
+    public MessageResponse delete(@PathVariable String id) {
+        return service.delete(MessageId.from(id));
     }
 
 }
