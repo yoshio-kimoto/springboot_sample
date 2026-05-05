@@ -8,6 +8,8 @@ import lombok.*;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "messages")
@@ -33,6 +35,8 @@ public class MessageEntity {
     private Instant readAt;
     private Instant deleteAt;
 
+    private Set<String> tags;
+
     @NotNull
     @Column(unique = true, nullable = false)
     private String idempotencyKey;
@@ -49,6 +53,7 @@ public class MessageEntity {
                 .text(request.text())
                 .sentAt(Instant.now(Clock.systemUTC()))
                 .idempotencyKey(key)
+                .tags(new HashSet<>())
                 .build();
     }
 

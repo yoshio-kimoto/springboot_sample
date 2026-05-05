@@ -39,4 +39,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidTagException.class)
+    public ResponseEntity<?> handleInvalidTagException(InvalidTagException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(ex.getMessage()));
+    }
+
 }

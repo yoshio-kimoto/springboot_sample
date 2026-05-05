@@ -1,11 +1,10 @@
 package com.example.message.service;
 
-import com.example.message.dto.MessageId;
-import com.example.message.dto.MessageRequest;
-import com.example.message.dto.MessageResponse;
+import com.example.message.dto.*;
 import com.example.message.entity.AuditEntity;
 import com.example.message.entity.MessageEntity;
 import com.example.message.exception.BusinessException;
+import com.example.message.exception.InvalidTagException;
 import com.example.message.exception.ResourceNotFoundException;
 import com.example.message.repository.AuditRepository;
 import com.example.message.repository.MessageRepository;
@@ -116,6 +115,31 @@ public class MessageService {
 
         return toResponse(savedMessage);
 */
+
+    }
+
+    @Transactional
+    public MessageTagsResponse addTag(MessageId id, MessageTag tag) {
+
+        MessageEntity entity = messageRepo.findById(id.id())
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found: ID: " + id.id()));
+
+        String newTag = tag.tag();
+        if (entity.getTags().contains(newTag)) {
+//            This is not idempotent.
+//            throw new BusinessException("Tag exists already: tag" + newTag);
+            log.info("Tag exists already: tag: {}", newTag);
+            return new MessageTagsResponse(
+                    entity.getId(), entity.getTags()
+            );
+        }
+
+        entity.getTags().add(newTag);
+        MessageEntity saved = messageRepo.save(entity);
+
+        return new MessageTagsResponse(
+                saved.getId(), saved.getTags()
+        );
 
     }
 
