@@ -1,0 +1,15 @@
+DROP TABLE IF EXISTS employees;
+DROP TABLE IF EXISTS companies;
+
+CREATE TABLE IF NOT EXISTS companies (
+   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+   name VARCHAR(255) NOT NULL,
+   address VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS employees (
+   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+   company_id BIGINT,
+   name VARCHAR(255),
+   CONSTRAINT fk_company FOREIGN KEY (company_id) REFERENCES companies(id)
+);
